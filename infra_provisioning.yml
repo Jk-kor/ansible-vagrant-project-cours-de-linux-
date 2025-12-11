@@ -1,0 +1,22 @@
+---
+- name: 2. Provision Infra/DNS Server (Bind9 Installation)
+  hosts: infra_servers
+  become: yes # 루트 권한으로 실행
+  vars:
+    bind9_package: bind9
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Bind9 package
+      apt:
+        name: "{{ bind9_package }}"
+        state: present
+
+    - name: Start and enable Bind9 service
+      systemd:
+        name: "{{ bind9_package }}"
+        state: started
+        enabled: yes

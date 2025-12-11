@@ -1,0 +1,48 @@
+---
+- name: 1. Provision Web/App Server with Docker and Nginx
+  hosts: web_servers
+  become: yes # 루트 권한으로 실행
+  vars:
+    docker_package: docker.io
+    docker_compose_package: docker-compose
+    nginx_package: nginx
+    
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        
+    - name: Install required packages (Docker, Docker Compose, Nginx, Postgres client)
+      apt:
+        name: 
+          - "{{ docker_package }}"
+          - "{{ docker_compose_package }}"
+          - "{{ nginx_package }}"
+          - postgresql-client
+          - curl
+        state: present
+
+    - name: Start and enable Docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add 'vagrant' user to the 'docker' group
+      user:
+        name: vagrant
+        groups: docker
+        append: yes
+        
+    - name: Stop/Disable default Nginx service (will be managed by Docker later)
+      systemd:
+        name: nginx
+        state: stopped
+        enabled: no
+
+    - name: Ensure /app directory exists
+      file:
+        path: /home/vagrant/app
+        state: directory
+        owner: vagrant
+        group: vagrant

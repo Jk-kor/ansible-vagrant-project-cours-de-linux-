@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  web_app:
+    image: nginx:alpine
+    container_name: nginx_proxy
+    ports:
+      - "80:80"
+    volumes:
+      # /usr/share/nginx/html에 index.html 파일 마운트
+      - ./index.html:/usr/share/nginx/html/index.html
+    restart: always

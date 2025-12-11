@@ -1,0 +1,20 @@
+---
+- name: Fix Docker Compose Link for compatibility
+  hosts: web_servers
+  become: yes
+  tasks:
+    - name: Ensure docker-compose command is available via symlink
+      ansible.builtin.file:
+        src: /usr/bin/docker-compose
+        dest: /usr/local/bin/docker-compose
+        state: link
+        force: yes
+      ignore_errors: yes
+
+    - name: Re-create symlink if using the modern 'docker compose' structure
+      ansible.builtin.file:
+        src: /usr/libexec/docker/cli-plugins/docker-compose # Common path for modern structure
+        dest: /usr/local/bin/docker-compose
+        state: link
+        force: yes
+      ignore_errors: yes

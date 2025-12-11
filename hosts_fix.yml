@@ -1,0 +1,26 @@
+---
+- name: 6. Final Fix: Ensure ALL Nodes are in Web Server's /etc/hosts file
+  hosts: web_servers
+  become: yes
+  
+  tasks:
+    - name: Add Admin node to hosts file
+      lineinfile:
+        path: /etc/hosts
+        regexp: '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\s+admin'
+        line: "192.168.56.10\tadmin"
+        state: present
+        
+    - name: Add Web node to hosts file (Self)
+      lineinfile:
+        path: /etc/hosts
+        regexp: '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\s+web'
+        line: "192.168.56.20\tweb"
+        state: present
+
+    - name: Add Infra node to hosts file
+      lineinfile:
+        path: /etc/hosts
+        regexp: '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\s+infra'
+        line: "192.168.56.30\tinfra"
+        state: present

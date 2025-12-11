@@ -1,0 +1,21 @@
+---
+- name: 4. Final Application Deployment
+  hosts: web_servers
+  become: yes
+  
+  tasks:
+    - name: Copy application files to Web server
+      copy:
+        src: ~/app/ # Admin 서버의 ~/app 폴더
+        dest: /home/vagrant/ # Web 서버의 /home/vagrant/ 폴더로 복사
+        owner: vagrant
+        group: vagrant
+        mode: '0755'
+
+    - name: Run Docker Compose up
+      command: docker-compose up -d
+      args:
+        chdir: /home/vagrant/app
+      environment:
+        # Docker Compose 실행 시 vagrant 사용자 권한 사용
+        HOME: /home/vagrant

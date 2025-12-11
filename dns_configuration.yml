@@ -1,0 +1,53 @@
+---
+- name: 3. Configure DNS (Bind9) on Infra Server
+  hosts: infra_servers
+  become: yes
+  
+  tasks:
+    # --- DNS 영역 파일 설정 (편의상 간단한 hosts 파일 기반으로 대체) ---
+    # 실제 프로덕션 환경에서는 Bind9 설정 파일 (named.conf)을 수정해야 하지만,
+    # Vagrant 환경에서 호스트 이름을 쉽게 해결하기 위해 Infra 서버의 hosts 파일을 수정합니다.
+
+    - name: Ensure hosts file contains all node IPs for simple lookup
+      lineinfile:
+        path: /etc/hosts
+        regexp: '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\s+admin'
+        line: "192.168.56.10\tadmin"
+        state: present
+        
+    - name: Add Web node to hosts file
+      lineinfile:
+        path: /etc/hosts
+        regexp: '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\s+web'
+        line: "192.168.56.20\tweb"
+        state: present
+
+    - name: Add Infra node to hosts file
+      lineinfile:
+        path: /etc/hosts
+        regexp: '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\s+infra'
+        line: "192.168.56.30\tinfra"
+        state: present
+
+    - name: Restart Bind9 service (to load hosts file change if Bind9 is configured to use it)
+      systemd:
+        name: bind9
+        state: restarted
+      ignore_errors: yes # Bind9 설정을 복잡하게 하지 않기 위해 재시작 오류 무시
+
+- name: 4. Configure Web Server to use Infra as DNS resolver
+  hosts: web_servers
+  become: yes
+  
+  tasks:
+    # Web 서버가 Infra 서버 (192.168.56.30)를 DNS 서버로 사용하도록 /etc/resolv.conf 수정
+    # (Ubuntu 22.04에서는 netplan을 사용하지만, 간단한 테스트를 위해 resolv.conf를 직접 덮어씁니다.)
+    - name: Configure DNS resolver on Web
+      copy:
+        content: |
+          nameserver 192.168.56.30
+          nameserver 8.8.8.8
+        dest: /etc/resolv.conf
+        owner: root
+        group: root
+        mode: '0644'

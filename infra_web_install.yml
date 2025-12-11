@@ -1,0 +1,33 @@
+---
+- name: 5. Install Nginx on Infra Server for testing
+  hosts: infra_servers
+  become: yes
+
+  tasks:
+    - name: Ensure Nginx is installed and running
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Ensure Nginx service is started and enabled
+      ansible.builtin.systemd:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Overwrite default Nginx index.html for identification
+      ansible.builtin.copy:
+        content: |
+          <!DOCTYPE html>
+          <html>
+          <head><title>Infra Server Test</title></head>
+          <body>
+              <h1>This is the Infra Server (DNS)</h1>
+              <p>Host: infra (192.168.56.30)</p>
+          </body>
+          </html>
+        dest: /var/www/html/index.nginx-debian.html
+        owner: www-data
+        group: www-data
+        mode: '0644'
