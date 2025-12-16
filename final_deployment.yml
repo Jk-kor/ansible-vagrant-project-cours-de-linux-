@@ -12,6 +12,46 @@
         group: vagrant
         mode: '0755'
 
+    - name: Ensure certs directory exists
+      file:
+        path: /home/vagrant/app/certs
+        state: directory
+        owner: vagrant
+        group: vagrant
+
+    - name: Generate Self-Signed SSL Certificate
+      command: >
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048
+        -keyout /home/vagrant/app/certs/server.key
+        -out /home/vagrant/app/certs/server.crt
+        -subj "/C=FR/ST=Nouvelle-Aquitaine/L=Bordeaux/O=FilRouge/CN=web"
+      args:
+        creates: /home/vagrant/app/certs/server.crt
+
+    - name: Create Nginx configuration file (default.conf)
+      copy:
+        dest: /home/vagrant/app/default.conf
+        content: |
+          server {
+              listen 80;
+              server_name localhost;
+              # HTTP로 접속하면 HTTPS로 리다이렉트
+              return 301 https://$host$request_uri;
+          }
+
+          server {
+              listen 443 ssl;
+              server_name localhost;
+
+              ssl_certificate /etc/nginx/certs/server.crt;
+              ssl_certificate_key /etc/nginx/certs/server.key;
+
+              location / {
+                  root /usr/share/nginx/html;
+                  index index.html;
+              }
+          }
+
     - name: Run Docker Compose up
       command: docker-compose up -d
       args:

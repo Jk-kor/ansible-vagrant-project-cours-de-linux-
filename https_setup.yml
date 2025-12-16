@@ -4,8 +4,8 @@
   become: yes
 
   tasks:
-    # 1. 컨테이너 이름으로 강제 삭제 (마운트 충돌/이름 충돌 방지)
-    - name: Force stop and remove nginx_proxy container
+    # 1. (옵션) 컨테이너 이름으로 강제 삭제 (마운트 충돌/이름 충돌 방지)
+    - name: Force stop and remove nginx_proxy container (optional)
       shell: |
         docker stop nginx_proxy || true
         docker rm nginx_proxy || true
@@ -19,22 +19,7 @@
         owner: vagrant
         group: vagrant
 
-    # 3. index.html 파일 강제 생성 (디렉토리 마운트 오류 방지)
-    - name: Ensure index.html is a file and contains correct content
-      copy:
-        dest: /home/vagrant/app/index.html
-        content: |
-          <!DOCTYPE html>
-          <html>
-          <head><title>Application Deployed</title></head>
-          <body>
-              <h1>Application Deployed Successfully via Ansible! (HTTPS)</h1>
-              <p>This page is served by Nginx running inside a Docker container.</p>
-          </body>
-          </html>
-        owner: vagrant
-        group: vagrant
-        mode: '0644'
+    # 3. index.html은 소스(app)에서 관리: 강제 생성/덮어쓰기는 생략
 
     # 4. SSL 인증서 및 키 생성 (Self-Signed)
     - name: Generate Self-Signed SSL Certificate
@@ -71,29 +56,6 @@
               }
           }
 
-    # 6. Docker Compose 파일 업데이트 (443 포트 및 볼륨 마운트 추가)
-    - name: Update docker-compose.yml for HTTPS
-      copy:
-        dest: /home/vagrant/app/docker-compose.yml
-        content: |
-          version: '3.8'
-          services:
-            web_app:
-              image: nginx:alpine
-              container_name: nginx_proxy
-              ports:
-                - "80:80"
-                - "443:443"
-              volumes:
-                - ./index.html:/usr/share/nginx/html/index.html
-                - ./certs:/etc/nginx/certs
-                - ./default.conf:/etc/nginx/conf.d/default.conf
-              restart: always
+    # 6. docker-compose.yml은 소스(app)에서 관리: 이 플레이북에서 수정하지 않음
 
-    # 7. Docker Compose 재시작 (설정 적용)
-    - name: Restart Docker containers to apply HTTPS
-      command: docker-compose up -d --force-recreate
-      args:
-        chdir: /home/vagrant/app
-      environment:
-        HOME: /home/vagrant
+    # 7. 재기동은 최종 배포(final_deployment.yml)에서 일원화
