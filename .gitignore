@@ -1,0 +1,32 @@
+# Vagrant
+.vagrant/
+*.box
+
+# SSH keys / private materials
+id_rsa
+id_dsa
+*.pem
+*.key
+*.ppk
+*.crt
+*.csr
+
+# Ansible
+*.retry
+
+# Local environment files
+.env
+.env.*
+
+# App certs generated locally (avoid committing)
+app/certs/
+
+# Logs & archives
+*.log
+*.tar
+*.gz
+*.zip
+
+# OS/editor
+.DS_Store
+Thumbs.db
