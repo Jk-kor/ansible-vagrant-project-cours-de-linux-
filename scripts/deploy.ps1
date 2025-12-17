@@ -1,6 +1,6 @@
 #requires -Version 5.1
 
-<#!
+<#
 Deploy the Vagrant + Docker demo in one go on Windows PowerShell.
 - Starts all VMs
 - Prepares Infra (bind9, hosts entries)
@@ -9,7 +9,7 @@ Deploy the Vagrant + Docker demo in one go on Windows PowerShell.
 After completion:
   HTTP  -> http://localhost:8081
   HTTPS -> https://localhost:8444 (self-signed cert)
-!>
+#>
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -20,9 +20,9 @@ function Assert-Command([string]$Name) {
   }
 }
 
-function Invoke-Vagrant([string]$Args) {
-  Write-Host "→ vagrant $Args" -ForegroundColor Cyan
-  & vagrant $Args
+function Invoke-Vagrant([string]$VagrantArgs) {
+  Write-Host "→ vagrant $VagrantArgs" -ForegroundColor Cyan
+  & vagrant $VagrantArgs
 }
 
 function Invoke-SSH([string]$machine, [string]$cmd) {
