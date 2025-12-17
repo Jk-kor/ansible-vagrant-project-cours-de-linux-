@@ -138,8 +138,3 @@ Exemples :
 # Supprimer sans confirmation
 ./scripts/snapshot.ps1 -Action delete -Name snap-20251217-103000 -Yes
 ```
-
-## Prochaines étapes (optionnel)
-- Câbler Ansible pour s’exécuter depuis la VM `admin` comme contrôleur (ajouter inventaire et distribution de clés).
-- Ajouter des GitHub Actions pour linter Ansible/YAML et valider le fichier Compose.
-- Paramétrer les réglages communs via un fichier `.env`.
