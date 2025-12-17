@@ -7,9 +7,6 @@ Ce dépôt lance un labo de 3 machines virtuelles avec Vagrant et déploie une a
 - web    (192.168.56.20) ← Nginx dans Docker, sert l'application
 - infra  (192.168.56.30) ← Bind9 (DNS) + entrées hosts de commodité
 
-Redirections de ports sur l’hôte :
-- HTTP  : http://localhost:8081
-- HTTPS : https://localhost:8444 (auto-signé)
 
 ## Prérequis
 - Windows 10/11
