@@ -2,14 +2,14 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-  # Ubuntu 22.04 LTS (Jammy Jellyfish) 박스 사용
+  # Utiliser la box Ubuntu 22.04 LTS (Jammy Jellyfish)
   config.vm.box = "ubuntu/jammy64"
   config.vm.box_check_update = false
   
-  # 부팅 시간 초과를 600초(10분)로 늘려 불안정한 환경에 대비합니다.
+  # Augmenter le délai de démarrage à 600s (10 min) pour pallier des environnements instables
   config.vm.boot_timeout = 600
 
-  # [1] Admin/Bastion Node (192.168.56.10)
+  # [1] Nœud Admin/Bastion (192.168.56.10)
   config.vm.define "admin" do |admin|
     admin.vm.hostname = "admin"
     admin.vm.network "private_network", ip: "192.168.56.10"
@@ -17,9 +17,9 @@ Vagrant.configure("2") do |config|
       vb.memory = "1024"
       vb.name = "FR_Admin"
     end
-    # SSH 키 생성을 위한 스크립트 실행
+    # Exécuter le script de génération de clés SSH
     admin.vm.provision "shell", path: "scripts/setup_ssh.sh"
-    # 리포의 플레이북/스크립트를 /home/vagrant 로 동기화 (클론 후 바로 사용 가능)
+    # Synchroniser les fichiers du dépôt (playbooks/scripts) vers /home/vagrant (utilisable immédiatement après le clone)
     admin.vm.provision "shell", inline: <<-SHELL
       set -e
       echo "[Admin] Syncing repository files from /vagrant to /home/vagrant ..."
@@ -30,7 +30,7 @@ Vagrant.configure("2") do |config|
     SHELL
   end
 
-  # [2] Web/App Node (192.168.56.20)
+  # [2] Nœud Web/App (192.168.56.20)
   config.vm.define "web" do |web|
     web.vm.hostname = "web"
     web.vm.network "private_network", ip: "192.168.56.20"
@@ -39,31 +39,31 @@ Vagrant.configure("2") do |config|
       vb.cpus = 2
       vb.name = "FR_Web"
     end
-    # 포트 포워딩: HTTP는 8081, HTTPS는 8444 사용 (충돌 방지)
+    # Redirection de ports : HTTP 8081, HTTPS 8444 (pour éviter les collisions)
     web.vm.network "forwarded_port", guest: 80, host: 8081
     web.vm.network "forwarded_port", guest: 443, host: 8444
 
-    # [웹 자동 배포] Ansible 없이도 동작하도록, /vagrant/app 기반으로 Docker+Nginx 컨테이너를 자동 실행
+    # [Déploiement Web automatique] Lancer automatiquement un conteneur Docker+Nginx basé sur /vagrant/app, sans Ansible
     web.vm.provision "shell", inline: <<-SHELL
       set -e
       echo "[Web] Preparing Docker/Nginx environment..."
       sudo apt-get update -y
       sudo apt-get install -y docker.io docker-compose nginx curl || true
       sudo systemctl enable --now docker
-      # Host nginx는 중지 (컨테이너로 관리)
+      # Arrêter nginx sur l'hôte (géré via conteneur)
       sudo systemctl stop nginx || true
       sudo systemctl disable nginx || true
 
       echo "[Web] Syncing app from /vagrant/app to /home/vagrant/app ..."
       sudo rm -rf /home/vagrant/app
       sudo mkdir -p /home/vagrant/app
-      # /vagrant는 호스트 리포 공유. 없으면 스킵.
+      # /vagrant est le partage du dépôt hôte. Ignorer si absent.
       if [ -d /vagrant/app ]; then
         sudo cp -r /vagrant/app/* /home/vagrant/app/
       fi
       sudo chown -R vagrant:vagrant /home/vagrant/app
 
-      # HTTPS 자가서명 인증서 및 기본 nginx conf 보장
+      # Garantir le certificat auto-signé et la configuration nginx par défaut
       sudo -u vagrant mkdir -p /home/vagrant/app/certs
       if [ ! -f /home/vagrant/app/certs/server.crt ]; then
         openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
@@ -84,7 +84,7 @@ server {
 EOF"
       fi
 
-      # docker compose v1/v2 호환 심볼릭 링크
+      # Lien symbolique de compatibilité pour docker compose v1/v2
       if [ ! -e /usr/local/bin/docker-compose ] && [ -x /usr/bin/docker-compose ]; then
         sudo ln -sf /usr/bin/docker-compose /usr/local/bin/docker-compose || true
       fi
@@ -99,7 +99,7 @@ EOF"
     SHELL
   end
 
-  # [3] Infra/DNS Node (192.168.56.30)
+  # [3] Nœud Infra/DNS (192.168.56.30)
   config.vm.define "infra" do |infra|
     infra.vm.hostname = "infra"
     infra.vm.network "private_network", ip: "192.168.56.30"
