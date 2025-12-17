@@ -31,8 +31,9 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 Ce que fait le script :
 - Lance `vagrant up` sur toutes les VM
-- Infra : installe bind9 et ajoute des entrées hosts
+- Infra : installe et configure Bind9 avec une zone locale `testdnsfilrouge.local` (enregistrements admin/web/infra)
 - Web : installe Docker + docker-compose, arrête nginx hôte, charge `app/`, génère un certificat auto-signé, écrit `default.conf`, lance `docker-( )compose up -d`
+- Admin/Web : pointe le résolveur DNS vers Infra (systemd-resolved) pour résoudre `*.testdnsfilrouge.local`
 
 Après succès, ouvrez :
 - HTTP  → http://localhost:8081
@@ -71,6 +72,7 @@ Après succès, ouvrez :
 - Si `vagrant up` échoue, essayez `vagrant destroy -f; vagrant up` pour réinitialiser le labo.
 - Docker peut nécessiter une reconnexion pour que l’utilisateur `vagrant` prenne en compte le groupe `docker` ; le script lance Docker de manière non interactive, donc cela devrait fonctionner malgré tout.
 - Si les ports 8081/8444 sont occupés, modifiez-les dans `Vagrantfile`, puis exécutez `vagrant reload --provision` puis `./scripts/deploy.ps1`.
+- Un simple `vagrant up` (sans `scripts/deploy.ps1`) ne configure pas automatiquement le DNS. Utilisez le script pour Bind9 + configuration des résolveurs.
 
 ## Sauvegarde et restauration (snapshots)
 

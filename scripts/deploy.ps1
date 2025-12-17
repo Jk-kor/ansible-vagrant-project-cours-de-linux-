@@ -40,17 +40,63 @@ Invoke-Vagrant 'up'
 $infraScript = @'
 set -e
 sudo apt-get update -y
-sudo apt-get install -y bind9
-# Ensure bind9 enabled and started
-sudo systemctl enable --now bind9 || true
-# Hosts entries for convenience
+sudo apt-get install -y bind9 dnsutils
+
+# Configurer BIND9 pour le domaine local testdnsfilrouge.local
+sudo bash -lc "cat > /etc/bind/named.conf.local <<'EOF'
+zone "testdnsfilrouge.local" {
+  type master;
+  file "/etc/bind/db.testdnsfilrouge.local";
+};
+EOF"
+
+sudo bash -lc "cat > /etc/bind/db.testdnsfilrouge.local <<'EOF'
+$TTL    600
+@   IN  SOA infra.testdnsfilrouge.local. admin.testdnsfilrouge.local. (
+      2025121701 ; Serial
+      3600       ; Refresh
+      600        ; Retry
+      604800     ; Expire
+      600 )      ; Negative Cache TTL
+@       IN  NS   infra.testdnsfilrouge.local.
+admin   IN  A    192.168.56.10
+web     IN  A    192.168.56.20
+infra   IN  A    192.168.56.30
+EOF"
+
+# Assouplir les options pour écouter sur toutes les interfaces et répondre aux clients du réseau privé
+sudo bash -lc "sed -i 's/^\s*listen-on-v6.*/\tlisten-on-v6 { any; };/' /etc/bind/named.conf.options || true"
+sudo bash -lc "grep -q 'listen-on' /etc/bind/named.conf.options && sed -i 's/^\s*listen-on.*/\tlisten-on { any; };/' /etc/bind/named.conf.options || true"
+sudo bash -lc "grep -q 'allow-query' /etc/bind/named.conf.options && sed -i 's/^\s*allow-query.*/\tallow-query { any; };/' /etc/bind/named.conf.options || sudo bash -lc 'printf "\tallow-query { any; };\n" >> /etc/bind/named.conf.options'"
+
+# Validation rapide de la config
+sudo named-checkconf
+sudo named-checkzone testdnsfilrouge.local /etc/bind/db.testdnsfilrouge.local
+
+# Démarrer/activer bind9
+sudo systemctl enable --now bind9
+sudo systemctl restart bind9 || true
+
+# (Optionnel) Entrées /etc/hosts locales pour commodité sur infra
 sudo bash -lc "grep -q '^192.168.56.10\s\+admin' /etc/hosts || echo '192.168.56.10\tadmin' | sudo tee -a /etc/hosts >/dev/null"
 sudo bash -lc "grep -q '^192.168.56.20\s\+web' /etc/hosts || echo '192.168.56.20\tweb' | sudo tee -a /etc/hosts >/dev/null"
 sudo bash -lc "grep -q '^192.168.56.30\s\+infra' /etc/hosts || echo '192.168.56.30\tinfra' | sudo tee -a /etc/hosts >/dev/null"
-sudo systemctl restart bind9 || true
 '@
 
 Invoke-SSH infra $infraScript
+# 2.1) Configurer les résolveurs sur admin et web pour utiliser infra (systemd-resolved)
+$setResolver = @'
+set -e
+sudo apt-get update -y
+sudo apt-get install -y dnsutils || true
+sudo mkdir -p /etc/systemd/resolved.conf.d
+echo -e "[Resolve]\nDNS=192.168.56.30\nDomains=testdnsfilrouge.local" | sudo tee /etc/systemd/resolved.conf.d/filrouge.conf
+sudo systemctl restart systemd-resolved || true
+'@
+
+Invoke-SSH admin $setResolver
+Invoke-SSH web   $setResolver
+
 
 # 3) Web node: install Docker, docker-compose, nginx, prepare app dir
 $webScriptBeforeUpload = @'
