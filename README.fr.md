@@ -45,6 +45,29 @@ Après succès, ouvrez :
 - `*.yml` — Playbooks Ansible (optionnels, non requis par le déploiement PowerShell)
 - `scripts/deploy.ps1` — déploiement Windows en un clic
 
+## 🌐 Étape 2 : Mise en place du DNS Interne
+
+- Configuration du Domaine : création du domaine local `testdnsfilrouge.local` sur la VM `infra` (Bind9). Vous pouvez vous appuyer sur le playbook `dns_configuration.yml` si vous souhaitez l’automatiser.
+- Résolution de Problème : sur la VM `admin`, forcer le résolveur à pointer vers la VM `infra` (`192.168.56.30`).
+	- Méthode rapide (temporaire, peut être écrasée par systemd-resolved) :
+		```powershell
+		vagrant ssh admin -c "sudo bash -lc 'grep -q "nameserver 192.168.56.30" /etc/resolv.conf || echo nameserver 192.168.56.30 | sudo tee -a /etc/resolv.conf'"
+		```
+	- Méthode persistante (Ubuntu 22.04, systemd-resolved) :
+		```powershell
+		vagrant ssh admin -c "sudo mkdir -p /etc/systemd/resolved.conf.d; echo -e '[Resolve]\nDNS=192.168.56.30\nDomains=testdnsfilrouge.local' | sudo tee /etc/systemd/resolved.conf.d/filrouge.conf; sudo systemctl restart systemd-resolved"
+		```
+- Résultat : valider la résolution avec `dig` et `curl`.
+	```powershell
+	# Interroger le serveur DNS infra directement
+	vagrant ssh admin -c "dig @192.168.56.30 testdnsfilrouge.local +noall +answer"
+	vagrant ssh admin -c "dig @192.168.56.30 web.testdnsfilrouge.local A +short"
+
+	# Tester un accès HTTP(S) basique
+	vagrant ssh admin -c "curl -I http://web || curl -I http://192.168.56.20"
+	vagrant ssh admin -c "curl -I -k https://web || curl -I -k https://192.168.56.20:443"
+	```
+
 ## Dépannage
 - Si `vagrant up` échoue, essayez `vagrant destroy -f; vagrant up` pour réinitialiser le labo.
 - Docker peut nécessiter une reconnexion pour que l’utilisateur `vagrant` prenne en compte le groupe `docker` ; le script lance Docker de manière non interactive, donc cela devrait fonctionner malgré tout.
