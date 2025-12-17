@@ -1,6 +1,5 @@
 # Fil Rouge : Déploiement rapide Vagrant + Ansible + Docker
 
-[English](README.md) | Français
 
 Ce dépôt lance un labo de 3 machines virtuelles avec Vagrant et déploie une application Nginx simple via Docker sur le nœud Web.
 
