@@ -45,7 +45,7 @@ Après succès, ouvrez :
 - `*.yml` — Playbooks Ansible (optionnels, non requis par le déploiement PowerShell)
 - `scripts/deploy.ps1` — déploiement Windows en un clic
 
-## 🌐 Étape 2 : Mise en place du DNS Interne
+## 🌐 Mise en place du DNS Interne
 
 - Configuration du Domaine : création du domaine local `testdnsfilrouge.local` sur la VM `infra` (Bind9). Vous pouvez vous appuyer sur le playbook `dns_configuration.yml` si vous souhaitez l’automatiser.
 - Résolution de Problème : sur la VM `admin`, forcer le résolveur à pointer vers la VM `infra` (`192.168.56.30`).
