@@ -1,7 +1,7 @@
 ---
 - name: 1. Provision Web/App Server with Docker and Nginx
   hosts: web_servers
-  become: yes # 루트 권한으로 실행
+  become: yes # exécuter avec les privilèges root
   vars:
     docker_package: docker.io
     docker_compose_package: docker-compose

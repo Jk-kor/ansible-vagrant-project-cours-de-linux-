@@ -4,14 +4,14 @@
   become: yes
 
   tasks:
-    # 1. (옵션) 컨테이너 이름으로 강제 삭제 (마운트 충돌/이름 충돌 방지)
+    # 1. (option) Forcer la suppression par nom de conteneur (éviter les conflits de montage/nom)
     - name: Force stop and remove nginx_proxy container (optional)
       shell: |
         docker stop nginx_proxy || true
         docker rm nginx_proxy || true
       ignore_errors: yes
 
-    # 2. 인증서 저장 폴더 생성
+  # 2. Créer le dossier de stockage des certificats
     - name: Create directory for certificates
       file:
         path: /home/vagrant/app/certs
@@ -19,9 +19,9 @@
         owner: vagrant
         group: vagrant
 
-    # 3. index.html은 소스(app)에서 관리: 강제 생성/덮어쓰기는 생략
+  # 3. index.html est géré côté source (app) : pas de création/écrasement forcé
 
-    # 4. SSL 인증서 및 키 생성 (Self-Signed)
+  # 4. Générer le certificat et la clé SSL (auto-signés)
     - name: Generate Self-Signed SSL Certificate
       command: >
         openssl req -x509 -nodes -days 365 -newkey rsa:2048
@@ -36,12 +36,12 @@
       copy:
         dest: /home/vagrant/app/default.conf
         content: |
-          server {
-              listen 80;
-              server_name localhost;
-              # HTTP로 접속하면 HTTPS로 리다이렉트
-              return 301 https://$host$request_uri;
-          }
+      server {
+        listen 80;
+        server_name localhost;
+        # Rediriger HTTP vers HTTPS
+        return 301 https://$host$request_uri;
+      }
 
           server {
               listen 443 ssl;
@@ -56,6 +56,6 @@
               }
           }
 
-    # 6. docker-compose.yml은 소스(app)에서 관리: 이 플레이북에서 수정하지 않음
+  # 6. docker-compose.yml est géré dans la source (app) : non modifié par ce playbook
 
-    # 7. 재기동은 최종 배포(final_deployment.yml)에서 일원화
+  # 7. Les redémarrages sont centralisés dans final_deployment.yml

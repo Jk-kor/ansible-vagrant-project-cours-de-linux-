@@ -4,9 +4,9 @@
   become: yes
   
   tasks:
-    # --- DNS 영역 파일 설정 (편의상 간단한 hosts 파일 기반으로 대체) ---
-    # 실제 프로덕션 환경에서는 Bind9 설정 파일 (named.conf)을 수정해야 하지만,
-    # Vagrant 환경에서 호스트 이름을 쉽게 해결하기 위해 Infra 서버의 hosts 파일을 수정합니다.
+    # --- Configuration des zones DNS (simplifiée via le fichier hosts pour la commodité) ---
+    # En production, il faudrait modifier les fichiers de configuration Bind9 (named.conf),
+    # mais ici, dans l'environnement Vagrant, on modifie le fichier hosts du serveur Infra pour une résolution simple.
 
     - name: Ensure hosts file contains all node IPs for simple lookup
       lineinfile:
@@ -33,15 +33,15 @@
       systemd:
         name: bind9
         state: restarted
-      ignore_errors: yes # Bind9 설정을 복잡하게 하지 않기 위해 재시작 오류 무시
+  ignore_errors: yes # Ignorer les erreurs de redémarrage pour éviter de complexifier la configuration de Bind9
 
 - name: 4. Configure Web Server to use Infra as DNS resolver
   hosts: web_servers
   become: yes
   
   tasks:
-    # Web 서버가 Infra 서버 (192.168.56.30)를 DNS 서버로 사용하도록 /etc/resolv.conf 수정
-    # (Ubuntu 22.04에서는 netplan을 사용하지만, 간단한 테스트를 위해 resolv.conf를 직접 덮어씁니다.)
+    # Configurer le serveur Web pour utiliser le serveur Infra (192.168.56.30) comme DNS via /etc/resolv.conf
+    # (Ubuntu 22.04 utilise netplan, mais pour un test simple on écrase directement resolv.conf.)
     - name: Configure DNS resolver on Web
       copy:
         content: |
